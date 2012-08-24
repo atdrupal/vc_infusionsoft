@@ -1,0 +1,69 @@
+<?php
+/**
+ * @file vc_infusion.module
+ *
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function vc_infusion_permission() {
+  $permissions['administer infusionsoft.com'] = array(
+    'title' => t('Administer infusionsoft.com service'),
+    'description' => t('Configure infusionsoft.com service integration.'),
+  );
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function vc_infusion_menu() {
+  $items['admin/config/services/infusionsoft'] = array(
+    'title' => 'Infusionsoft.com',
+    'access arguments' => array('administer onlywire.com'),
+    'file' => 'vc_infusion.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vc_infusion_settings_form'),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function vc_infusion_user_insert(&$edit, $account, $category) {
+  dsm(func_get_args());
+  $appkey  = variable_get('vc_infusion_appkey', '');
+  $appname = variable_get('vc_infusion_appname', '');
+  if (!$appkey || !$appname) {
+    $message = "Missing appkey/appname";
+    watchdog('vc_infusion', $message, array(), WATCHDOG_ERROR);
+    return;
+  }
+
+  $first_name = variable_get('vc_infusion_template_firstname', '');
+  $first_name = token_replace($first_name, array('user' => $account));
+  $last_name = variable_get('vc_infusion_template_lastname', '');
+  $last_name = token_replace($last_name, array('user' => $account));
+  $email = variable_get('vc_infusion_template_email', '[user:mail]');
+  vc_infusion_contact_add($appkey, $appname, $first_name, $last_name, $email);
+}
+
+/**
+ * Action callback, create new contact in InfusionSoft.
+ */
+function vc_infusion_contact_add($appkey, $appname, $first_name, $last_name, $email) {
+  $url = "https://{$appname}.infusionsoft.com/api/xmlrpc/ContactService.add";
+  $params[] = $appkey;
+  $params[] = array('FirstName' => $first_name, 'LastName' => $last_name, 'Email' => $email);
+
+  dsm(array($url, array('ContactService.add' => $params))); return;
+
+  $result = xmlrpc($url, array('ContactService.add' => $params));
+
+  $message = "Add new contact to InfusionSoft.com: !email.<br />Result: <pre>!result</pre>";
+  $options = array('!url' => $email, '!result' => $result);
+  watchdog('vc_infusion', $message, $options);
+}

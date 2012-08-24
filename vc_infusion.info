@@ -1,0 +1,6 @@
+name = "Infusionsoft.com"
+version = 7.x-1.0
+description = "Add new Drupal user to Infusionsoft"
+core = 7.x
+configure = admin/config/services/infusionsoft
+dependencies[] = token

@@ -1,0 +1,15 @@
+<?php
+/**
+ * @file vc_infusion.install
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function vc_infusion_uninstall() {
+  variable_del('vc_infusion_appkey');
+  variable_del('vc_infusion_appname');
+  variable_del('vc_infusion_template_firstname');
+  variable_del('vc_infusion_template_lastname');
+  variable_del('vc_infusion_template_email');
+}
